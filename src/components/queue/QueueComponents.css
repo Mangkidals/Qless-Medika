@@ -1,0 +1,397 @@
+/* Live Queue Card Styles */
+.live-queue-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.live-queue-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queue-clinic-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.clinic-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clinic-counter-tag {
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  padding: 3px 7px;
+  background-color: var(--secondary);
+  color: #FFFFFF;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+
+[data-theme="dark"] .clinic-counter-tag {
+  background-color: var(--primary);
+}
+
+.clinic-name {
+  font-size: 16px;
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  margin: 0;
+}
+
+.queue-active-doctor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.doctor-icon {
+  color: var(--primary);
+}
+
+.queue-numbers-display {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+  background-color: var(--bg);
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.current-call-block {
+  border-right: 1px solid var(--border);
+  padding-right: 8px;
+}
+
+.call-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.big-ticket-number {
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: var(--weight-extrabold);
+  color: var(--primary);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.last-called-time {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.next-ticket-number {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.people-queue-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.queue-estimate-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.estimate-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.estimate-icon {
+  color: var(--accent);
+}
+
+.estimate-dot {
+  color: var(--border);
+}
+
+.estimate-per-patient {
+  font-weight: var(--weight-medium);
+  font-size: 11.5px;
+}
+
+/* E-Ticket Card Styles */
+.ticket-card-wrapper {
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.e-ticket-card {
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  background-color: var(--surface);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.e-ticket-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--bg);
+  border-bottom: 1.5px dashed var(--border);
+}
+
+.ticket-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-icon-box.sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+}
+
+.ticket-brand-name {
+  font-weight: var(--weight-bold);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.ticket-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.code-label {
+  display: block;
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.booking-code-text {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: var(--weight-extrabold);
+  color: var(--primary);
+  letter-spacing: 0.04em;
+}
+
+.copy-code-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.copy-code-btn:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Number banner */
+.ticket-number-banner {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  color: #FFFFFF;
+  text-align: center;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.number-banner-label {
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.main-ticket-digit {
+  font-size: 46px;
+  font-weight: var(--weight-extrabold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.ticket-room-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.ticket-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.info-cell-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.info-cell-value {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.info-cell-value.with-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-accent {
+  color: #b45309;
+}
+
+[data-theme="dark"] .text-accent {
+  color: #fbbf24;
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.font-bold {
+  font-weight: var(--weight-bold);
+}
+
+/* Barcode */
+.ticket-barcode-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px;
+  background-color: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.barcode-bars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 42px;
+}
+
+.barcode-line {
+  height: 100%;
+  background-color: var(--text);
+  border-radius: 1px;
+}
+
+.barcode-number {
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+.ticket-notice-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: var(--primary-light);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.notice-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ticket-card-wrapper,
+  .ticket-card-wrapper * {
+    visibility: visible;
+  }
+  .ticket-card-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .e-ticket-footer {
+    display: none !important;
+  }
+}
