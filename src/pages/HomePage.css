@@ -558,21 +558,27 @@
 }
 
 .cta-banner-box {
-  background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%);
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%);
   border-radius: 20px;
   padding: var(--space-8) var(--space-6);
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 12px 30px -4px rgba(37, 99, 235, 0.1), var(--shadow-md);
-  border: 1.5px solid rgba(37, 99, 235, 0.2);
-  transition: all var(--transition-normal);
+  box-shadow: 0 20px 60px -10px rgba(37, 99, 235, 0.5);
+  border: none;
+}
+
+.cta-banner-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 [data-theme="dark"] .cta-banner-box {
-  background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
-  border-color: var(--border);
-  box-shadow: var(--shadow-xl);
+  background: linear-gradient(135deg, #1e3a8a 0%, #1D4ED8 50%, #2563EB 100%);
+  box-shadow: 0 20px 60px -10px rgba(37, 99, 235, 0.4);
 }
 
 .cta-banner-content {
@@ -587,9 +593,9 @@
 }
 
 .cta-pill-tag {
-  background-color: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid rgba(37, 99, 235, 0.25);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 12px;
   font-weight: var(--weight-bold);
   padding: 4px 14px;
@@ -603,12 +609,13 @@
   font-weight: var(--weight-extrabold);
   line-height: 1.25;
   margin: 0;
-  color: var(--text) !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 .cta-banner-desc {
   font-size: 16px;
-  color: var(--text-muted) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   line-height: 1.6;
   margin: 0;
   max-width: 600px;
@@ -622,32 +629,34 @@
   margin-top: 10px;
 }
 
-/* "Lihat Semua Antrean" Button */
-.cta-banner-buttons .btn-secondary {
-  background-color: var(--surface);
-  border: 1.5px solid var(--border);
-  color: var(--text) !important;
-  box-shadow: var(--shadow-sm);
-}
-
-.cta-banner-buttons .btn-secondary:hover {
-  background-color: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary) !important;
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
+/* Primary button on blue background */
 .cta-banner-buttons .btn-primary {
-  background-color: var(--primary);
-  color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  background-color: #FFFFFF !important;
+  color: var(--primary) !important;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
 }
 
 .cta-banner-buttons .btn-primary:hover {
-  background-color: var(--primary-hover);
+  background-color: #f0f7ff !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+/* Secondary button on blue background */
+.cta-banner-buttons .btn-secondary {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  color: #FFFFFF !important;
+  box-shadow: none;
+}
+
+.cta-banner-buttons .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: #FFFFFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
 /* Responsive */

@@ -43,8 +43,27 @@ export function LoginPage() {
 
     setLoading(true);
     setTimeout(() => {
-      login(email, password);
+      const res = login(email, password);
       setLoading(false);
+
+      if (!res.success) {
+        if (res.isAdminAccount) {
+          setErrors({
+            general: (
+              <span>
+                {res.error}{' '}
+                <Link to="/admin/login" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>
+                  Buka Portal Admin di sini
+                </Link>
+              </span>
+            )
+          });
+        } else {
+          setErrors({ general: res.error || 'Gagal masuk akun pasien.' });
+        }
+        return;
+      }
+
       navigate('/');
     }, 400);
   };
@@ -70,6 +89,20 @@ export function LoginPage() {
             </p>
           </div>
 
+          {errors.general && (
+            <div className="auth-general-error-box" role="alert" style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '8px',
+              padding: '12px 14px',
+              color: 'var(--danger)',
+              fontSize: '13px',
+              lineHeight: '1.4'
+            }}>
+              {errors.general}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="auth-actual-form" noValidate>
             <FormField
               label="Alamat Email Terdaftar"
@@ -78,7 +111,7 @@ export function LoginPage() {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                if (errors.email || errors.general) setErrors(prev => ({ ...prev, email: '', general: '' }));
               }}
               placeholder="nama@email.com"
               required
@@ -93,7 +126,7 @@ export function LoginPage() {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                if (errors.password || errors.general) setErrors(prev => ({ ...prev, password: '', general: '' }));
               }}
               placeholder="••••••••"
               required
@@ -147,6 +180,12 @@ export function LoginPage() {
                 Daftar Pasien Baru
               </Link>
             </p>
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--border)', fontSize: '13px' }}>
+              <span>Petugas Loket / Administrator RS? </span>
+              <Link to="/admin/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                Masuk ke Portal Admin
+              </Link>
+            </div>
           </div>
         </div>
       </div>

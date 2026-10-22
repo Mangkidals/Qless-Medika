@@ -105,6 +105,8 @@ export function Footer() {
             <Link to="/terms">Syarat & Ketentuan Layanan</Link>
             <span className="legal-separator">•</span>
             <Link to="/login">Portal Pasien</Link>
+            <span className="legal-separator">•</span>
+            <Link to="/admin" className="text-primary font-semibold">Portal Petugas Loket</Link>
           </div>
         </div>
       </div>

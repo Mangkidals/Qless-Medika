@@ -84,8 +84,12 @@ export function RegisterPage() {
 
     setLoading(true);
     setTimeout(() => {
-      register(formData);
+      const res = register(formData);
       setLoading(false);
+      if (!res.success) {
+        setErrors({ email: res.error || 'Pendaftaran gagal.' });
+        return;
+      }
       navigate('/appointment');
     }, 400);
   };

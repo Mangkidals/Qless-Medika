@@ -19,7 +19,7 @@ import FormField from '../components/common/FormField';
 import Button from '../components/common/Button';
 import Card, { CardBody } from '../components/common/Card';
 import Badge from '../components/common/Badge';
-import Reveal from '../components/common/Reveal';
+
 import './QueueTrackerPage.css';
 
 export function QueueTrackerPage() {
@@ -190,13 +190,13 @@ export function QueueTrackerPage() {
         {/* Live Counters Grid */}
         <div className="counters-cards-grid">
           {queues.map((clinic, idx) => (
-            <Reveal key={clinic.clinicId} direction="up" delay={(idx % 6) * 100}>
+            <div key={clinic.clinicId} className="queue-card-animate" style={{ animationDelay: `${idx * 80}ms` }}>
               <LiveQueueCard
                 clinic={clinic}
                 onAdvance={advanceClinicQueue}
                 showAdvanceBtn={true}
               />
-            </Reveal>
+            </div>
           ))}
         </div>
 

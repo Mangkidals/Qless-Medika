@@ -18,6 +18,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 
 /**
  * Scroll to top of window automatically on route transition
@@ -42,6 +44,7 @@ export function App() {
             {/* Auth routes with independent full split layout (no outer navbar/footer) */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
 
             {/* Standard routes wrapped in floating pill navbar & hospital footer */}
             <Route
@@ -129,6 +132,14 @@ export function App() {
               element={
                 <Layout>
                   <TermsPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <Layout>
+                  <AdminDashboardPage />
                 </Layout>
               }
             />

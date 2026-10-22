@@ -43,6 +43,7 @@ export function Navbar() {
     { to: '/about', label: 'Tentang' },
     { to: '/doctors', label: 'Dokter' },
     { to: '/queue', label: 'Antrean Live' },
+    { to: '/admin', label: 'Loket Admin' },
     { to: '/gallery', label: 'Galeri' },
     { to: '/blog', label: 'Artikel' },
     { to: '/contact', label: 'Kontak' }
