@@ -24,12 +24,6 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleDemoFill = () => {
-    setEmail('hendra.wijaya@gmail.com');
-    setPassword('qlessMedika123');
-    setErrors({});
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -47,20 +41,7 @@ export function LoginPage() {
       setLoading(false);
 
       if (!res.success) {
-        if (res.isAdminAccount) {
-          setErrors({
-            general: (
-              <span>
-                {res.error}{' '}
-                <Link to="/admin/login" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>
-                  Buka Portal Admin di sini
-                </Link>
-              </span>
-            )
-          });
-        } else {
-          setErrors({ general: res.error || 'Gagal masuk akun pasien.' });
-        }
+        setErrors({ general: res.error || 'Gagal masuk akun pasien.' });
         return;
       }
 
@@ -159,18 +140,6 @@ export function LoginPage() {
             >
               Masuk ke Akun Pasien
             </Button>
-
-            {/* Quick Demo Autofill Button */}
-            <div className="demo-autofill-box">
-              <span className="demo-box-label">Ingin mencoba tanpa registrasi?</span>
-              <button
-                type="button"
-                className="btn-demo-autofill"
-                onClick={handleDemoFill}
-              >
-                Klik Isi Otomatis Akun Demo Pasien
-              </button>
-            </div>
           </form>
 
           <div className="auth-switch-footer">
@@ -180,12 +149,6 @@ export function LoginPage() {
                 Daftar Pasien Baru
               </Link>
             </p>
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--border)', fontSize: '13px' }}>
-              <span>Petugas Loket / Administrator RS? </span>
-              <Link to="/admin/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                Masuk ke Portal Admin
-              </Link>
-            </div>
           </div>
         </div>
       </div>

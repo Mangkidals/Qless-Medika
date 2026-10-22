@@ -39,15 +39,19 @@ export function AdminDashboardPage() {
     resetDemoData
   } = useQueue();
 
-  const { admin, logoutAdmin, isAdminAuthenticated } = useAuth();
+  const { admin, logoutAdmin, isAdminAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  // Protect Admin Dashboard: Redirect to /admin/login if not logged in
+  // Protect Admin Dashboard:
+  // If logged in as patient user, redirect away to /
+  // If not logged in as admin, redirect to /admin/login
   useEffect(() => {
-    if (!isAdminAuthenticated) {
+    if (user && !isAdminAuthenticated) {
+      navigate('/', { replace: true });
+    } else if (!isAdminAuthenticated) {
       navigate('/admin/login', { replace: true });
     }
-  }, [isAdminAuthenticated, navigate]);
+  }, [isAdminAuthenticated, user, navigate]);
 
   const [selectedClinic, setSelectedClinic] = useState('all');
   const [selectedStatusTab, setSelectedStatusTab] = useState('all'); // 'all' | 'pending' | 'waiting' | 'serving' | 'completed'

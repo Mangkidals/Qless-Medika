@@ -18,7 +18,7 @@ import './Navbar.css';
 export function Navbar() {
   const { scrollDirection, isAtTop } = useScrollDirection({ threshold: 12, initialDelay: 60 });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, isAdminAuthenticated } = useAuth();
   const location = useLocation();
 
   // Close mobile menu on route change
@@ -43,7 +43,6 @@ export function Navbar() {
     { to: '/about', label: 'Tentang' },
     { to: '/doctors', label: 'Dokter' },
     { to: '/queue', label: 'Antrean Live' },
-    { to: '/admin', label: 'Loket Admin' },
     { to: '/gallery', label: 'Galeri' },
     { to: '/blog', label: 'Artikel' },
     { to: '/contact', label: 'Kontak' }
@@ -84,6 +83,12 @@ export function Navbar() {
           {/* Nav Actions (Theme, Auth, Booking CTA) */}
           <div className="nav-actions-desktop">
             <ThemeToggle />
+
+            {isAdminAuthenticated && (
+              <Button as={Link} to="/admin" variant="secondary" size="sm">
+                Dashboard Loket
+              </Button>
+            )}
 
             {user ? (
               <div className="user-nav-dropdown">

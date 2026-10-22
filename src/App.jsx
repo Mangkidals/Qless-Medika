@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { QueueProvider } from './context/QueueContext';
 import Layout from './components/layout/Layout';
 
@@ -20,6 +20,27 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+
+/**
+ * Strict Admin Protected Route
+ * If a regular patient (user) attempts to access /admin, immediately redirect to / (Home).
+ * If unauthenticated, redirect to /admin/login.
+ */
+function AdminProtectedRoute({ children }) {
+  const { user, isAdminAuthenticated } = useAuth();
+
+  // If logged in as patient, completely forbid access
+  if (user && !isAdminAuthenticated) {
+    return <Navigate to="/" replace state={{ accessDenied: true }} />;
+  }
+
+  // If not logged in as admin, redirect to admin login
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+}
 
 /**
  * Scroll to top of window automatically on route transition
@@ -138,9 +159,11 @@ export function App() {
             <Route
               path="/admin"
               element={
-                <Layout>
-                  <AdminDashboardPage />
-                </Layout>
+                <AdminProtectedRoute>
+                  <Layout>
+                    <AdminDashboardPage />
+                  </Layout>
+                </AdminProtectedRoute>
               }
             />
 

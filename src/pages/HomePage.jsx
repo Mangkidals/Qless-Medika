@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   CalendarPlus, 
   Activity, 
@@ -11,7 +11,8 @@ import {
   Star, 
   Sparkles,
   Stethoscope,
-  ChevronRight
+  ChevronRight,
+  ShieldAlert
 } from 'lucide-react';
 import { hospitalInfo, hospitalStats, specialties, patientTestimonials } from '../data/hospitalData';
 import { doctorsList } from '../data/doctorsData';
@@ -26,11 +27,45 @@ import './HomePage.css';
 
 export function HomePage() {
   const { queues, advanceClinicQueue } = useQueue();
+  const location = useLocation();
+  const [accessDeniedToast, setAccessDeniedToast] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.accessDenied) {
+      setAccessDeniedToast(true);
+      const timer = setTimeout(() => setAccessDeniedToast(false), 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
   const featuredDoctors = doctorsList.slice(0, 3);
   const topClinics = specialties.slice(0, 4);
 
   return (
     <div className="home-page">
+      {/* Access Denied Toast */}
+      {accessDeniedToast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 99999,
+          backgroundColor: '#ef4444',
+          color: '#ffffff',
+          padding: '12px 24px',
+          borderRadius: '10px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '14px',
+          fontWeight: 600
+        }}>
+          <ShieldAlert size={20} />
+          <span>Akses Ditolak: Halaman tersebut khusus Administrator Rumah Sakit. Anda sedang aktif sebagai Akun Pasien.</span>
+        </div>
+      )}
       {/* 1. Hero Section */}
       <section className="hero-section">
         <div className="container hero-container">

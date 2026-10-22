@@ -26,7 +26,7 @@ export function AdminLoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { loginAdmin, isAdminAuthenticated } = useAuth();
+  const { loginAdmin, isAdminAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
   // If already logged in as admin, redirect to dashboard immediately
@@ -35,12 +35,6 @@ export function AdminLoginPage() {
       navigate('/admin', { replace: true });
     }
   }, [isAdminAuthenticated, navigate]);
-
-  const handleFillAdminCredentials = () => {
-    setEmail(ADMIN_CREDENTIALS.email);
-    setPassword(ADMIN_CREDENTIALS.password);
-    setErrorMessage('');
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -157,32 +151,32 @@ export function AdminLoginPage() {
             >
               Masuk ke Dashboard Loket
             </Button>
+          </form>
 
-            {/* Quick Demo Credentials Autofill Helper */}
-            <div className="admin-credentials-helper">
-              <div className="helper-header">
-                <Sparkles size={14} className="helper-icon" />
-                <span>Kredensial Admin Resmi</span>
-              </div>
-              <div className="helper-credentials-display">
-                <div className="helper-row">
-                  <span className="label">Email:</span>
-                  <code>adminganz123@gmail.com</code>
-                </div>
-                <div className="helper-row">
-                  <span className="label">Password:</span>
-                  <code>ladeshgimank</code>
-                </div>
-              </div>
+          {user && (
+            <div className="admin-login-warning-alert" style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '10px',
+              padding: '12px 14px',
+              color: 'var(--danger)',
+              fontSize: '13px',
+              lineHeight: '1.4'
+            }}>
+              <strong>Peringatan Akses: Anda sedang login sebagai Pasien ({user.name})</strong>
+              <p style={{ margin: '4px 0 8px 0', fontSize: '12.5px' }}>
+                Akun pasien umum tidak memiliki akses ke fungsi administrator rumah sakit.
+              </p>
               <button
                 type="button"
-                className="btn-autofill-admin"
-                onClick={handleFillAdminCredentials}
+                className="btn btn-sm btn-outline-danger"
+                onClick={() => logout()}
+                style={{ fontSize: '12px', padding: '4px 10px' }}
               >
-                Isi Otomatis Kredensial Admin Ini
+                Keluar dari Akun Pasien
               </button>
             </div>
-          </form>
+          )}
 
           <div className="admin-login-footer">
             <p>
