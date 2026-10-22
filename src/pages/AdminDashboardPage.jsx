@@ -42,12 +42,12 @@ export function AdminDashboardPage() {
   const { admin, logoutAdmin, isAdminAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  // Protect Admin Dashboard: Redirect to /admin/login if not logged in, or / if logged in as patient
+  // Protect Admin Dashboard: Redirect to /login if not logged in, or / if logged in as patient
   useEffect(() => {
     if (user && !isAdminAuthenticated) {
       navigate('/', { replace: true, state: { accessDenied: true } });
     } else if (!isAdminAuthenticated) {
-      navigate('/admin/login', { replace: true });
+      navigate('/login', { replace: true });
     }
   }, [isAdminAuthenticated, user, navigate]);
 
@@ -161,7 +161,7 @@ export function AdminDashboardPage() {
               className="btn btn-sm btn-outline-danger admin-logout-btn"
               onClick={() => {
                 logoutAdmin();
-                navigate('/admin/login', { replace: true });
+                navigate('/login', { replace: true });
               }}
               title="Keluar dari akun admin"
             >

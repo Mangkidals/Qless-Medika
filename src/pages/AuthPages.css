@@ -56,6 +56,39 @@
   gap: var(--space-3);
 }
 
+/* 2-column row for form fields (Phone+NIK, Password+Confirm) */
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: end;   /* snap inputs to the same bottom line */
+}
+
+/* Ensure label area is at least 1 line tall so both columns stay aligned
+   even when one label wraps to 2 lines */
+.form-row-2 .form-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.form-row-2 .form-label {
+  min-height: 36px;        /* room for 2 label lines at 14px with 1.25 line-height */
+  align-items: flex-start; /* multi-line labels read from top */
+  flex-wrap: wrap;
+  line-height: 1.35;
+}
+
+@media (max-width: 540px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .form-row-2 .form-label {
+    min-height: unset;
+  }
+}
+
 .auth-options-row {
   display: flex;
   align-items: center;
@@ -268,6 +301,42 @@
   font-size: 12px;
   color: #94a3b8;
   font-weight: var(--weight-semibold);
+}
+
+
+.auth-password-wrapper {
+  position: relative;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 36px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+
+.auth-password-toggle:hover {
+  color: var(--text);
+}
+
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive Split Layout */

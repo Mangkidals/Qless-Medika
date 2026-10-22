@@ -85,19 +85,62 @@ export function AuthProvider({ children }) {
     return () => clearInterval(interval);
   }, [admin]);
 
-  // --- PATIENT AUTH METHODS ---
-  const login = (email, password) => {
-    const cleanEmail = email.trim().toLowerCase();
+  // --- UNIFIED AUTH METHOD (Admin & Patient Single Gateway) ---
+  const login = useCallback((email, password) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
 
-    // Prevent admin email from being used in patient login
+    // 1. Role Detection: Check if credentials match ADMINISTRATOR
     if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase()) {
+      // Check Anti-Brute Force Lockout
+      const bfStatus = getBruteForceStatus();
+      if (bfStatus.isLocked) {
+        return {
+          success: false,
+          role: 'admin',
+          isLocked: true,
+          error: `Akses ditolak: Akun administrator terkunci sementara karena 5x kegagalan autentikasi. Silakan coba lagi dalam ${bfStatus.remainingSeconds || 900} detik.`
+        };
+      }
+
+      // Verify salted SHA-256 hash
+      const isValidAdmin = verifyAdminCredentials(cleanEmail, cleanPassword);
+
+      if (isValidAdmin) {
+        resetBruteForceTracker();
+        const signedSession = createAdminSession(cleanEmail);
+        setAdmin(signedSession);
+        setUser(null); // Clear patient user session when admin logs in
+        sessionStorage.setItem('qless_admin_session', JSON.stringify(signedSession));
+        localStorage.removeItem('qless_admin');
+
+        return {
+          success: true,
+          role: 'admin',
+          admin: signedSession,
+          redirect: '/admin'
+        };
+      }
+
+      // Record failed admin login attempt
+      const attemptResult = recordFailedAdminLogin();
+      if (attemptResult.isLocked) {
+        return {
+          success: false,
+          role: 'admin',
+          isLocked: true,
+          error: 'Akun administrator telah dikunci selama 15 menit karena mencapai batas 5 kali kegagalan autentikasi (Anti-Brute Force).'
+        };
+      }
+
       return {
         success: false,
-        isAdminAccount: true,
-        error: 'Email ini terdaftar sebagai Administrator Rumah Sakit. Portal ini khusus pasien.'
+        role: 'admin',
+        error: `Kata sandi administrator salah! Sisa percobaan: ${attemptResult.remainingAttempts} kali sebelum akun dikunci.`
       };
     }
 
+    // 2. Role Detection: Regular PATIENT / USER
     const mockUser = {
       id: "usr-" + Math.random().toString(36).substring(2, 8),
       name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase()) || "Pasien Terdaftar",
@@ -106,9 +149,18 @@ export function AuthProvider({ children }) {
       nik: "3171052408900002",
       role: "patient"
     };
+
     setUser(mockUser);
-    return { success: true, user: mockUser };
-  };
+    setAdmin(null); // Clear admin session when patient logs in
+    sessionStorage.removeItem('qless_admin_session');
+
+    return {
+      success: true,
+      role: 'patient',
+      user: mockUser,
+      redirect: '/'
+    };
+  }, []);
 
   const register = (formData) => {
     const cleanEmail = formData.email.trim().toLowerCase();
@@ -137,45 +189,10 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // --- SECURE ADMIN AUTH METHODS ---
+  // Backwards compatibility alias for loginAdmin
   const loginAdmin = useCallback((email, password) => {
-    // 1. Anti-Brute Force Lockout Check
-    const bfStatus = getBruteForceStatus();
-    if (bfStatus.isLocked) {
-      return {
-        success: false,
-        isLocked: true,
-        error: `Akses ditolak: Akun terkunci sementara karena terdeteksi percobaan masuk berulang. Silakan coba lagi dalam ${bfStatus.remainingSeconds || 900} detik.`
-      };
-    }
-
-    // 2. Cryptographic Salted Hash Verification
-    const isValid = verifyAdminCredentials(email, password);
-
-    if (isValid) {
-      resetBruteForceTracker();
-      const signedSession = createAdminSession(email.trim().toLowerCase());
-      setAdmin(signedSession);
-      sessionStorage.setItem('qless_admin_session', JSON.stringify(signedSession));
-      localStorage.removeItem('qless_admin'); // Ensure legacy key is removed
-      return { success: true, admin: signedSession };
-    }
-
-    // 3. Record Failed Attempt
-    const attemptResult = recordFailedAdminLogin();
-    if (attemptResult.isLocked) {
-      return {
-        success: false,
-        isLocked: true,
-        error: 'Akun admin telah dikunci selama 15 menit karena mencapai batas 5 kali kegagalan autentikasi (Anti-Brute Force Protection).'
-      };
-    }
-
-    return {
-      success: false,
-      error: `Email atau kata sandi admin tidak valid! Sisa percobaan: ${attemptResult.remainingAttempts} kali sebelum akun dikunci.`
-    };
-  }, []);
+    return login(email, password);
+  }, [login]);
 
   const logoutAdmin = useCallback(() => {
     setAdmin(null);
