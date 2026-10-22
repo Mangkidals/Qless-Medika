@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth, ADMIN_CREDENTIALS } from '../context/AuthContext';
+import { getBruteForceStatus } from '../utils/security';
 import FormField from '../components/common/FormField';
 import Button from '../components/common/Button';
 import './AdminLoginPage.css';
@@ -25,9 +26,21 @@ export function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bruteForceInfo, setBruteForceInfo] = useState({ isLocked: false, remainingSeconds: 0 });
 
   const { loginAdmin, isAdminAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Monitor Anti-Brute Force Lockout
+  useEffect(() => {
+    const updateBF = () => {
+      const status = getBruteForceStatus();
+      setBruteForceInfo(status);
+    };
+    updateBF();
+    const interval = setInterval(updateBF, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // If already logged in as admin, redirect to dashboard immediately
   useEffect(() => {
@@ -39,6 +52,11 @@ export function AdminLoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (bruteForceInfo.isLocked) {
+      setErrorMessage(`Akun terkunci sementara karena aktivitas mencurigakan. Tunggu ${bruteForceInfo.remainingSeconds} detik.`);
+      return;
+    }
 
     if (!email.trim()) {
       setErrorMessage('Alamat email admin wajib diisi.');
@@ -111,7 +129,7 @@ export function AdminLoginPage() {
                 setEmail(e.target.value);
                 if (errorMessage) setErrorMessage('');
               }}
-              placeholder="adminganz123@gmail.com"
+              placeholder="placeholder@gmail.com"
               required
               iconLeft={<Mail size={16} />}
             />
@@ -146,10 +164,13 @@ export function AdminLoginPage() {
               variant="primary"
               size="lg"
               loading={loading}
+              disabled={bruteForceInfo.isLocked}
               className="w-full btn-admin-submit"
               iconRight={<ArrowRight size={18} />}
             >
-              Masuk ke Dashboard Loket
+              {bruteForceInfo.isLocked
+                ? `Terkunci Sementara (${bruteForceInfo.remainingSeconds}s)`
+                : 'Masuk ke Dashboard Loket'}
             </Button>
           </form>
 

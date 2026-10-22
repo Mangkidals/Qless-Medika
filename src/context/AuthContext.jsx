@@ -1,17 +1,24 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  verifyAdminCredentials,
+  createAdminSession,
+  validateAdminSession,
+  getBruteForceStatus,
+  recordFailedAdminLogin,
+  resetBruteForceTracker
+} from '../utils/security';
 
 const AuthContext = createContext(null);
 
 export const ADMIN_CREDENTIALS = {
   email: 'adminganz123@gmail.com',
-  password: 'ladeshgimank',
   name: 'Petugas Administrator Loket',
   role: 'admin',
   department: 'Loket Pendaftaran & Pelayanan Antrean RS'
 };
 
 export function AuthProvider({ children }) {
-  // 1. Separate Patient User State
+  // 1. Separate Patient User State (Persisted in localStorage)
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('qless_user');
@@ -21,12 +28,24 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // 2. Separate Admin State
+  // 2. Separate Secure Admin State (Stored in sessionStorage with Cryptographic Signature & TTL)
   const [admin, setAdmin] = useState(() => {
     try {
-      const savedAdmin = localStorage.getItem('qless_admin');
-      return savedAdmin ? JSON.parse(savedAdmin) : null;
+      // Purge any legacy unencrypted/insecure localStorage admin session
+      localStorage.removeItem('qless_admin');
+
+      const savedAdminRaw = sessionStorage.getItem('qless_admin_session');
+      if (!savedAdminRaw) return null;
+
+      const parsed = JSON.parse(savedAdminRaw);
+      const validated = validateAdminSession(parsed);
+      if (!validated) {
+        sessionStorage.removeItem('qless_admin_session');
+        return null;
+      }
+      return validated;
     } catch {
+      sessionStorage.removeItem('qless_admin_session');
       return null;
     }
   });
@@ -40,25 +59,42 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  // Sync Admin to localStorage
+  // Sync Admin to sessionStorage (Never localStorage to prevent persistent session hijacking)
   useEffect(() => {
     if (admin) {
-      localStorage.setItem('qless_admin', JSON.stringify(admin));
+      sessionStorage.setItem('qless_admin_session', JSON.stringify(admin));
     } else {
+      sessionStorage.removeItem('qless_admin_session');
       localStorage.removeItem('qless_admin');
     }
+  }, [admin]);
+
+  // Periodic Session TTL Check (Every 15 seconds) - Auto logout on expiration or DevTools tampering
+  useEffect(() => {
+    if (!admin) return;
+
+    const interval = setInterval(() => {
+      const valid = validateAdminSession(admin);
+      if (!valid) {
+        console.warn('[Security Guard] Admin session expired or invalidated. Logging out.');
+        setAdmin(null);
+        sessionStorage.removeItem('qless_admin_session');
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [admin]);
 
   // --- PATIENT AUTH METHODS ---
   const login = (email, password) => {
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if user accidentally entered admin email in patient login
+    // Prevent admin email from being used in patient login
     if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase()) {
       return {
         success: false,
         isAdminAccount: true,
-        error: 'Email ini terdaftar sebagai Administrator Rumah Sakit. Silakan login melalui Portal Khusus Admin.'
+        error: 'Email ini terdaftar sebagai Administrator Rumah Sakit. Portal ini khusus pasien.'
       };
     }
 
@@ -101,33 +137,54 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // --- ADMIN AUTH METHODS ---
-  const loginAdmin = (email, password) => {
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanPassword = password.trim();
-
-    if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase() && cleanPassword === ADMIN_CREDENTIALS.password) {
-      const adminProfile = {
-        id: "adm-001",
-        email: ADMIN_CREDENTIALS.email,
-        name: ADMIN_CREDENTIALS.name,
-        role: "admin",
-        department: ADMIN_CREDENTIALS.department,
-        lastLogin: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  // --- SECURE ADMIN AUTH METHODS ---
+  const loginAdmin = useCallback((email, password) => {
+    // 1. Anti-Brute Force Lockout Check
+    const bfStatus = getBruteForceStatus();
+    if (bfStatus.isLocked) {
+      return {
+        success: false,
+        isLocked: true,
+        error: `Akses ditolak: Akun terkunci sementara karena terdeteksi percobaan masuk berulang. Silakan coba lagi dalam ${bfStatus.remainingSeconds || 900} detik.`
       };
-      setAdmin(adminProfile);
-      return { success: true, admin: adminProfile };
+    }
+
+    // 2. Cryptographic Salted Hash Verification
+    const isValid = verifyAdminCredentials(email, password);
+
+    if (isValid) {
+      resetBruteForceTracker();
+      const signedSession = createAdminSession(email.trim().toLowerCase());
+      setAdmin(signedSession);
+      sessionStorage.setItem('qless_admin_session', JSON.stringify(signedSession));
+      localStorage.removeItem('qless_admin'); // Ensure legacy key is removed
+      return { success: true, admin: signedSession };
+    }
+
+    // 3. Record Failed Attempt
+    const attemptResult = recordFailedAdminLogin();
+    if (attemptResult.isLocked) {
+      return {
+        success: false,
+        isLocked: true,
+        error: 'Akun admin telah dikunci selama 15 menit karena mencapai batas 5 kali kegagalan autentikasi (Anti-Brute Force Protection).'
+      };
     }
 
     return {
       success: false,
-      error: 'Email atau kata sandi admin salah! Pastikan menggunakan kredensial resmi administrator.'
+      error: `Email atau kata sandi admin tidak valid! Sisa percobaan: ${attemptResult.remainingAttempts} kali sebelum akun dikunci.`
     };
-  };
+  }, []);
 
-  const logoutAdmin = () => {
+  const logoutAdmin = useCallback(() => {
     setAdmin(null);
-  };
+    sessionStorage.removeItem('qless_admin_session');
+    localStorage.removeItem('qless_admin');
+  }, []);
+
+  // Strict check: Is admin actively authenticated with a valid signed token
+  const isAdminAuthenticated = !!(admin && validateAdminSession(admin));
 
   return (
     <AuthContext.Provider
@@ -143,7 +200,7 @@ export function AuthProvider({ children }) {
         admin,
         loginAdmin,
         logoutAdmin,
-        isAdminAuthenticated: !!admin,
+        isAdminAuthenticated,
         ADMIN_CREDENTIALS
       }}
     >
@@ -159,4 +216,5 @@ export function useAuth() {
   }
   return context;
 }
+
 
