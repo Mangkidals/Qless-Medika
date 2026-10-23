@@ -84,8 +84,12 @@ export function RegisterPage() {
 
     setLoading(true);
     setTimeout(() => {
-      register(formData);
+      const res = register(formData);
       setLoading(false);
+      if (!res.success) {
+        setErrors({ email: res.error || 'Pendaftaran gagal.' });
+        return;
+      }
       navigate('/appointment');
     }, 400);
   };
@@ -137,14 +141,17 @@ export function RegisterPage() {
               />
 
               <FormField
-                label="Nomor Induk Kependudukan (NIK)"
+                label="NIK (No. Induk Kependudukan)"
                 name="nik"
                 value={formData.nik}
                 onChange={handleInputChange}
-                placeholder="16 digit NIK"
+                placeholder="16 digit NIK KTP"
                 required
                 error={errors.nik}
                 iconLeft={<CreditCard size={16} />}
+                maxLength={16}
+                inputMode="numeric"
+                pattern="\d{16}"
               />
             </div>
 

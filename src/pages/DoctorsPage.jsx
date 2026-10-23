@@ -8,7 +8,7 @@ import {
   Stethoscope, 
   ChevronRight
 } from 'lucide-react';
-import { doctorsList } from '../data/doctorsData';
+import { useQueue } from '../context/QueueContext';
 import { specialties } from '../data/hospitalData';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -17,6 +17,7 @@ import Reveal from '../components/common/Reveal';
 import './DoctorsPage.css';
 
 export function DoctorsPage() {
+  const { doctors } = useQueue();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSpecialty = searchParams.get('specialty') || 'all';
 
@@ -29,7 +30,7 @@ export function DoctorsPage() {
   ];
 
   const filteredDoctors = useMemo(() => {
-    return doctorsList.filter((doc) => {
+    return doctors.filter((doc) => {
       const matchSpecialty =
         selectedSpecialty === 'all' || doc.specialtyId === selectedSpecialty;
 

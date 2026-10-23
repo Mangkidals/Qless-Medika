@@ -47,9 +47,27 @@ export function TicketCard({ ticket, onPrint }) {
               </div>
               <span className="ticket-brand-name">RS Qless Medika</span>
             </div>
-            <Badge variant="success" pulse size="sm">
-              E-Tiket Terkonfirmasi
-            </Badge>
+            {ticket.status === 'pending' ? (
+              <Badge variant="accent" size="sm">
+                Menunggu Konfirmasi Loket
+              </Badge>
+            ) : ticket.status === 'serving' ? (
+              <Badge variant="success" pulse size="sm">
+                Sedang Dipanggil di Loket
+              </Badge>
+            ) : ticket.status === 'completed' ? (
+              <Badge variant="secondary" size="sm">
+                Selesai Dilayani
+              </Badge>
+            ) : ticket.status === 'cancelled' ? (
+              <Badge variant="danger" size="sm">
+                Antrean Dibatalkan
+              </Badge>
+            ) : (
+              <Badge variant="primary" pulse size="sm">
+                Diterima & Siap Dipanggil
+              </Badge>
+            )}
           </div>
 
           <div className="ticket-code-row">
