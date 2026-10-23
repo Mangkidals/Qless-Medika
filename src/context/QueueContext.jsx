@@ -239,30 +239,6 @@ export function QueueProvider({ children }) {
     ) || null;
   };
 
-  /**
-   * Advance clinic queue for demo interactivity
-   */
-  const advanceClinicQueue = (clinicId) => {
-    setQueues(prev => prev.map(clinic => {
-      if (clinic.clinicId === clinicId) {
-        const curNum = parseInt(clinic.currentNumber.split('-')[1], 10);
-        const nextNum = curNum + 1;
-        const newCur = `${clinic.prefix}-${String(nextNum).padStart(3, '0')}`;
-        const newNext = `${clinic.prefix}-${String(nextNum + 1).padStart(3, '0')}`;
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
-
-        return {
-          ...clinic,
-          currentNumber: newCur,
-          nextNumber: newNext,
-          totalWaiting: Math.max(0, clinic.totalWaiting - 1),
-          lastCalledAt: timeStr
-        };
-      }
-      return clinic;
-    }));
-  };
 
   /**
    * Delete an existing ticket permanently
@@ -340,7 +316,6 @@ export function QueueProvider({ children }) {
       deleteTicket,
       addDoctor,
       deleteDoctor,
-      advanceClinicQueue,
       resetDemoData
     }}>
       {children}

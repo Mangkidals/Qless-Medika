@@ -2,15 +2,9 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
-  Activity, 
-  Clock, 
-  Users, 
   RotateCw, 
   CalendarPlus, 
-  CheckCircle2, 
-  AlertCircle,
-  HelpCircle,
-  Volume2
+  AlertCircle
 } from 'lucide-react';
 import { useQueue } from '../context/QueueContext';
 import LiveQueueCard from '../components/queue/LiveQueueCard';
@@ -23,7 +17,7 @@ import Badge from '../components/common/Badge';
 import './QueueTrackerPage.css';
 
 export function QueueTrackerPage() {
-  const { queues, advanceClinicQueue, findTicket } = useQueue();
+  const { queues, findTicket } = useQueue();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchedTicket, setSearchedTicket] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
