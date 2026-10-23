@@ -1,15 +1,10 @@
 import React from 'react';
-import { Users, Clock, ArrowRight, Play, UserCheck, Stethoscope } from 'lucide-react';
-import Card, { CardBody, CardHeader, CardFooter } from '../common/Card';
+import { Users, Clock, Stethoscope } from 'lucide-react';
+import Card, { CardBody, CardHeader } from '../common/Card';
 import Badge from '../common/Badge';
-import Button from '../common/Button';
 import './QueueComponents.css';
 
-export function LiveQueueCard({
-  clinic,
-  onAdvance,
-  showAdvanceBtn = false
-}) {
+export function LiveQueueCard({ clinic }) {
   const isServing = clinic.status === 'serving';
 
   return (
@@ -62,20 +57,6 @@ export function LiveQueueCard({
           <span className="estimate-per-patient">{clinic.avgServiceTimeMinutes} mnt/pasien</span>
         </div>
       </CardBody>
-
-      {showAdvanceBtn && (
-        <CardFooter className="live-queue-footer">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onAdvance && onAdvance(clinic.clinicId)}
-            iconLeft={<Play size={14} />}
-            className="w-full"
-          >
-            Simulasi Panggil Nomor Berikutnya ({clinic.nextNumber})
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }

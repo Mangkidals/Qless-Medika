@@ -159,9 +159,7 @@ export function App() {
               path="/admin"
               element={
                 <AdminProtectedRoute>
-                  <Layout>
-                    <AdminDashboardPage />
-                  </Layout>
+                  <AdminDashboardPage />
                 </AdminProtectedRoute>
               }
             />

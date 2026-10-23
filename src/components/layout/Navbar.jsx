@@ -7,7 +7,8 @@ import {
   Activity, 
   User, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from 'lucide-react';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +19,7 @@ import './Navbar.css';
 export function Navbar() {
   const { scrollDirection, isAtTop } = useScrollDirection({ threshold: 12, initialDelay: 60 });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, logout, isAdminAuthenticated } = useAuth();
+  const { user, logout, admin, logoutAdmin, isAdminAuthenticated } = useAuth();
   const location = useLocation();
 
   // Close mobile menu on route change
@@ -84,13 +85,23 @@ export function Navbar() {
           <div className="nav-actions-desktop">
             <ThemeToggle />
 
-            {isAdminAuthenticated && (
-              <Button as={Link} to="/admin" variant="secondary" size="sm">
-                Dashboard Loket
-              </Button>
-            )}
-
-            {user ? (
+            {isAdminAuthenticated ? (
+              <div className="admin-nav-group">
+                <Link to="/admin" className="admin-nav-pill" title="Buka Dashboard Manajemen Antrean">
+                  <ShieldCheck size={16} className="text-primary" />
+                  <span className="admin-pill-text">Dashboard Loket</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={logoutAdmin}
+                  className="user-logout-btn"
+                  title="Keluar dari Akun Petugas Loket"
+                  aria-label="Keluar Admin"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : user ? (
               <div className="user-nav-dropdown">
                 <Link to="/queue" className="user-pill-btn" title="Lihat Tiket Antrean Saya">
                   <User size={16} />
@@ -201,7 +212,39 @@ export function Navbar() {
               Buat Janji Dokter Sekarang
             </Button>
 
-            {user ? (
+            {isAdminAuthenticated ? (
+              <div className="drawer-user-info drawer-admin-info">
+                <p className="drawer-user-greeting">
+                  <ShieldCheck size={16} className="text-primary inline-icon" />
+                  Masuk sebagai <strong>Admin Loket ({admin?.email || 'Staf RS'})</strong>
+                </p>
+                <div className="drawer-admin-buttons">
+                  <Button
+                    as={Link}
+                    to="/admin"
+                    variant="primary"
+                    size="md"
+                    className="w-full"
+                    iconLeft={<ShieldCheck size={16} />}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Buka Dashboard Loket
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      logoutAdmin();
+                      setMobileMenuOpen(false);
+                    }}
+                    iconLeft={<LogOut size={16} />}
+                  >
+                    Keluar Admin
+                  </Button>
+                </div>
+              </div>
+            ) : user ? (
               <div className="drawer-user-info">
                 <p className="drawer-user-greeting">
                   Masuk sebagai <strong>{user.name}</strong>

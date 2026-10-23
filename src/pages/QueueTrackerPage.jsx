@@ -193,8 +193,6 @@ export function QueueTrackerPage() {
             <div key={clinic.clinicId} className="queue-card-animate" style={{ animationDelay: `${idx * 80}ms` }}>
               <LiveQueueCard
                 clinic={clinic}
-                onAdvance={advanceClinicQueue}
-                showAdvanceBtn={true}
               />
             </div>
           ))}

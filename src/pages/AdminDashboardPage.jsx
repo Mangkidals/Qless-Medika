@@ -17,7 +17,11 @@ import {
   ArrowRight,
   Eye,
   ShieldCheck,
-  LogOut
+  LogOut,
+  ScanLine,
+  QrCode,
+  BadgeCheck,
+  Home
 } from 'lucide-react';
 import { useQueue } from '../context/QueueContext';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +31,7 @@ import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import FormField from '../components/common/FormField';
 import TicketCard from '../components/queue/TicketCard';
+import ThemeToggle from '../components/common/ThemeToggle';
 import './AdminDashboardPage.css';
 
 export function AdminDashboardPage() {
@@ -57,12 +62,87 @@ export function AdminDashboardPage() {
   const [activeNotification, setActiveNotification] = useState(null);
   const [previewTicket, setPreviewTicket] = useState(null);
 
+  // Quick Ticket Validation State
+  const [validationCode, setValidationCode] = useState('');
+  const [validationFeedback, setValidationFeedback] = useState(null);
+
   // Trigger temporary notification toast
   const showToast = (message, type = 'success') => {
     setActiveNotification({ message, type });
     setTimeout(() => {
       setActiveNotification(null);
     }, 3500);
+  };
+
+  // Direct Ticket Validation Handler (Check-In at Counter)
+  const handleValidateTicket = (e) => {
+    if (e) e.preventDefault();
+    const cleanCode = validationCode.trim().toUpperCase();
+    if (!cleanCode) {
+      setValidationFeedback({
+        type: 'error',
+        title: 'Kode Kosong',
+        message: 'Harap masukkan Kode Booking (misal: QLS-8821) atau Nomor Antrean (misal: A-027).'
+      });
+      return;
+    }
+
+    const foundTicket = tickets.find(t => 
+      t.bookingCode.toUpperCase() === cleanCode || 
+      t.ticketNumber.toUpperCase() === cleanCode ||
+      (t.nik && t.nik.trim() === cleanCode)
+    );
+
+    if (!foundTicket) {
+      setValidationFeedback({
+        type: 'error',
+        title: 'Tiket Tidak Ditemukan',
+        message: `Tiket dengan kode/nomor "${cleanCode}" tidak terdaftar dalam antrean aktif hari ini. Pastikan kode sudah sesuai.`
+      });
+      return;
+    }
+
+    if (foundTicket.status === 'pending') {
+      acceptTicket(foundTicket.bookingCode);
+      const updatedTicket = { ...foundTicket, status: 'waiting' };
+      setValidationFeedback({
+        type: 'success',
+        title: 'Tiket Pasien Berhasil Divalidasi!',
+        message: `Nomor antrean ${foundTicket.ticketNumber} atas nama ${foundTicket.patientName} telah divalidasi hadir di loket dan siap dipanggil dokter.`,
+        ticket: updatedTicket
+      });
+      showToast(`Antrean ${foundTicket.ticketNumber} (${foundTicket.patientName}) BERHASIL DIVALIDASI!`, 'success');
+      setValidationCode('');
+    } else if (foundTicket.status === 'waiting') {
+      setValidationFeedback({
+        type: 'info',
+        title: 'Tiket Sudah Divalidasi Sebelumnya',
+        message: `Antrean ${foundTicket.ticketNumber} (${foundTicket.patientName}) sudah berada dalam daftar SIAP PANGGIL di ${foundTicket.clinicName} (${foundTicket.room}).`,
+        ticket: foundTicket,
+        canCall: true
+      });
+    } else if (foundTicket.status === 'serving') {
+      setValidationFeedback({
+        type: 'info',
+        title: 'Pasien Sedang Diperiksa Dokter',
+        message: `Antrean ${foundTicket.ticketNumber} (${foundTicket.patientName}) saat ini sedang menjalani konsultasi di ${foundTicket.room}.`,
+        ticket: foundTicket
+      });
+    } else if (foundTicket.status === 'completed') {
+      setValidationFeedback({
+        type: 'info',
+        title: 'Pelayanan Pasien Sudah Selesai',
+        message: `Antrean ${foundTicket.ticketNumber} (${foundTicket.patientName}) telah menyelesaikan konsultasi dan resep obat.`,
+        ticket: foundTicket
+      });
+    } else if (foundTicket.status === 'cancelled') {
+      setValidationFeedback({
+        type: 'error',
+        title: 'Tiket Telah Dibatalkan',
+        message: `Antrean ${foundTicket.ticketNumber} (${foundTicket.patientName}) berstatus batal (${foundTicket.cancelReason || 'Dibatalkan loket'}).`,
+        ticket: foundTicket
+      });
+    }
   };
 
   // Filter tickets
@@ -156,19 +236,13 @@ export function AdminDashboardPage() {
               </div>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-danger admin-logout-btn"
-              onClick={() => {
-                logoutAdmin();
-                navigate('/login', { replace: true });
-              }}
-              title="Keluar dari akun admin"
-            >
-              <LogOut size={14} /> Keluar Admin
-            </button>
+            <ThemeToggle />
 
-            <Link to="/queue" className="btn btn-sm btn-secondary" target="_blank" rel="noreferrer">
+            <Link to="/" className="btn btn-sm btn-ghost" title="Lihat Website Publik Pasien">
+              <Home size={14} /> Beranda Web
+            </Link>
+
+            <Link to="/queue" className="btn btn-sm btn-secondary" target="_blank" rel="noreferrer" title="Buka Layar Monitor Publik di Tab Baru">
               Layar Publik <ArrowRight size={14} />
             </Link>
 
@@ -183,7 +257,19 @@ export function AdminDashboardPage() {
               }}
               title="Reset data demo ke status awal"
             >
-              <RotateCcw size={14} /> Reset Demo Data
+              <RotateCcw size={14} /> Reset Demo
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger admin-logout-btn"
+              onClick={() => {
+                logoutAdmin();
+                navigate('/login', { replace: true });
+              }}
+              title="Keluar dari akun admin"
+            >
+              <LogOut size={14} /> Keluar Admin
             </button>
           </div>
         </div>
@@ -260,20 +346,155 @@ export function AdminDashboardPage() {
           </Card>
         </section>
 
-        {/* Workflow Info Box */}
-        {pendingCount > 0 && (
-          <div className="pending-workflow-notice">
-            <div className="notice-icon-box">
-              <UserCheck size={22} />
+        {/* Loket Validasi & Check-In Tiket Pasien */}
+        <Card className="admin-validation-card" elevated>
+          <CardBody className="admin-validation-body">
+            <div className="admin-validation-header">
+              <div className="validation-header-title">
+                <div className="validation-icon-circle">
+                  <ScanLine size={22} />
+                </div>
+                <div>
+                  <h2 className="validation-main-heading">Loket Validasi & Check-in Tiket Kehadiran Pasien</h2>
+                  <p className="validation-sub-heading">
+                    Verifikasi kehadiran pasien saat tiba di loket pendaftaran. Masukkan kode booking atau nomor antrean untuk memvalidasi tiket masuk ke daftar panggil dokter.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="notice-text">
-              <strong>Ada {pendingCount} Antrean Online Baru Menunggu Penerimaan Loket!</strong>
-              <p>
-                Pasien telah reservasi melalui web. Petugas loket dapat memeriksa data di bawah dan mengklik tombol <strong>"Terima Antrean"</strong> untuk mengonfirmasi kehadiran & memasukkan pasien ke urutan panggil dokter.
-              </p>
-            </div>
-          </div>
-        )}
+
+            <form onSubmit={handleValidateTicket} className="admin-validation-form">
+              <div className="validation-input-group">
+                <div className="validation-input-wrapper">
+                  <FormField
+                    placeholder="Masukkan Kode Reservasi (contoh: QLS-8821) atau No. Tiket (contoh: A-027)..."
+                    value={validationCode}
+                    onChange={(e) => {
+                      setValidationCode(e.target.value);
+                      if (validationFeedback) setValidationFeedback(null);
+                    }}
+                    iconLeft={<QrCode size={18} />}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  className="validation-submit-btn"
+                  iconLeft={<BadgeCheck size={18} />}
+                >
+                  Validasi Kehadiran Tiket
+                </Button>
+              </div>
+
+              {/* Quick Pending Ticket Validation Suggestions */}
+              {pendingCount > 0 && (
+                <div className="pending-quick-pills">
+                  <span className="quick-pills-label">
+                    <UserCheck size={14} />
+                    {pendingCount} Antrean Baru Menunggu Validasi Loket:
+                  </span>
+                  <div className="pills-scroll-row">
+                    {tickets.filter(t => t.status === 'pending').map(ticket => (
+                      <button
+                        key={ticket.bookingCode}
+                        type="button"
+                        className="quick-validate-pill"
+                        title="Klik untuk langsung validasi kehadiran pasien ini"
+                        onClick={() => {
+                          setValidationCode(ticket.bookingCode);
+                          acceptTicket(ticket.bookingCode);
+                          const updatedTicket = { ...ticket, status: 'waiting' };
+                          setValidationFeedback({
+                            type: 'success',
+                            title: 'Tiket Berhasil Divalidasi!',
+                            message: `Antrean ${ticket.ticketNumber} (${ticket.patientName}) terkonfirmasi hadir di loket dan siap dipanggil dokter.`,
+                            ticket: updatedTicket
+                          });
+                          showToast(`Antrean ${ticket.ticketNumber} (${ticket.patientName}) BERHASIL DIVALIDASI!`, 'success');
+                          setValidationCode('');
+                        }}
+                      >
+                        <strong>{ticket.bookingCode}</strong> ({ticket.ticketNumber} • {ticket.patientName.split(' ')[0]})
+                        <span className="pill-action-tag">Validasi</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </form>
+
+            {/* Validation Feedback Result Box */}
+            {validationFeedback && (
+              <div className={`validation-result-panel result-${validationFeedback.type}`}>
+                <div className="validation-result-header">
+                  <div className="result-status-title">
+                    {validationFeedback.type === 'success' ? (
+                      <CheckCircle2 size={22} className="text-success" />
+                    ) : validationFeedback.type === 'error' ? (
+                      <AlertCircle size={22} className="text-danger" />
+                    ) : (
+                      <Clock size={22} className="text-primary" />
+                    )}
+                    <div>
+                      <h4 className="result-heading">{validationFeedback.title}</h4>
+                      <p className="result-detail-text">{validationFeedback.message}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setValidationFeedback(null)}
+                    title="Tutup hasil validasi"
+                  >
+                    <X size={16} /> Tutup
+                  </Button>
+                </div>
+
+                {validationFeedback.ticket && (
+                  <div className="result-ticket-details-card">
+                    <div className="result-meta-row">
+                      <div className="result-ticket-badge">
+                        <span className="result-code-tag">{validationFeedback.ticket.bookingCode}</span>
+                        <span className="result-number-tag">{validationFeedback.ticket.ticketNumber}</span>
+                      </div>
+                      <div className="result-patient-summary">
+                        <strong>{validationFeedback.ticket.patientName}</strong>
+                        <span>NIK: {validationFeedback.ticket.nik} • HP: {validationFeedback.ticket.phone}</span>
+                        <span className="result-clinic-info">
+                          🏥 {validationFeedback.ticket.clinicName} — {validationFeedback.ticket.doctorName} ({validationFeedback.ticket.room})
+                        </span>
+                      </div>
+                      <div className="result-actions-cluster">
+                        {validationFeedback.ticket.status === 'waiting' && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            iconLeft={<Volume2 size={16} />}
+                            onClick={() => {
+                              handleCall(validationFeedback.ticket);
+                              setValidationFeedback(null);
+                            }}
+                          >
+                            Panggil Pasien Sekarang
+                          </Button>
+                        )}
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          iconLeft={<Eye size={14} />}
+                          onClick={() => setPreviewTicket(validationFeedback.ticket)}
+                        >
+                          Lihat E-Tiket
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardBody>
+        </Card>
 
         {/* Controls: Search & Poliklinik Filter */}
         <div className="admin-controls-card">

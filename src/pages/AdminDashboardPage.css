@@ -275,40 +275,264 @@
   color: var(--text-muted);
 }
 
-/* Workflow Notice */
-.pending-workflow-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background-color: var(--accent-light);
-  border: 1.5px solid rgba(245, 158, 11, 0.35);
-  border-radius: var(--radius-card);
-  padding: 14px 18px;
+/* Loket Validasi & Check-In Tiket Card */
+.admin-validation-card {
   margin-bottom: var(--space-4);
-  color: var(--text);
+  border: 1.5px solid var(--primary-light);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(37, 99, 235, 0.03) 100%);
 }
 
-.notice-icon-box {
-  color: #b45309;
+.admin-validation-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-validation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.validation-header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.validation-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
-[data-theme="dark"] .notice-icon-box {
+.validation-main-heading {
+  font-size: 17.5px;
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  margin: 0 0 3px 0;
+}
+
+.validation-sub-heading {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.admin-validation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.validation-input-group {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.validation-submit-btn {
+  height: 44px;
+  white-space: nowrap;
+}
+
+/* Quick Pending Pills */
+.pending-quick-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.quick-pills-label {
+  font-size: 12.5px;
+  font-weight: var(--weight-semibold);
+  color: #b45309;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme="dark"] .quick-pills-label {
   color: #fbbf24;
 }
 
-.notice-text strong {
-  display: block;
-  font-size: 14.5px;
-  margin-bottom: 2px;
+.pills-scroll-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
-.notice-text p {
-  font-size: 13px;
+.quick-validate-pill {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.quick-validate-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.pill-action-tag {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+/* Validation Feedback Panel */
+.validation-result-panel {
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-top: 4px;
+  animation: fadeIn 0.3s ease;
+}
+
+.validation-result-panel.result-success {
+  background-color: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+}
+
+.validation-result-panel.result-info {
+  background-color: rgba(37, 99, 235, 0.08);
+  border: 1.5px solid rgba(37, 99, 235, 0.4);
+}
+
+.validation-result-panel.result-error {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+}
+
+.validation-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.result-status-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.result-heading {
+  font-size: 16px;
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  margin: 0 0 3px 0;
+}
+
+.result-detail-text {
+  font-size: 13.5px;
   color: var(--text-muted);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+.result-ticket-details-card {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.result-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.result-ticket-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 8px;
+  min-width: 90px;
+}
+
+.result-code-tag {
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+}
+
+.result-number-tag {
+  font-size: 22px;
+  font-weight: var(--weight-black);
+  color: var(--primary);
+  line-height: 1.1;
+}
+
+.result-patient-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.result-patient-summary strong {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.result-clinic-info {
+  color: var(--primary);
+  font-weight: var(--weight-medium);
+}
+
+.result-actions-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .validation-input-group {
+    grid-template-columns: 1fr;
+  }
+
+  .result-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .result-actions-cluster {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* Controls Card */

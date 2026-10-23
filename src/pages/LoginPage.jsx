@@ -9,7 +9,10 @@ import {
   Clock,
   Eye,
   EyeOff,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  User,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getBruteForceStatus } from '../utils/security';
@@ -18,6 +21,7 @@ import Button from '../components/common/Button';
 import './AuthPages.css';
 
 export function LoginPage() {
+  const [activeRoleTab, setActiveRoleTab] = useState('patient'); // 'patient' | 'admin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -101,6 +105,73 @@ export function LoginPage() {
             </p>
           </div>
 
+          {/* Role Mode Selector */}
+          <div className="auth-role-tabs-wrapper">
+            <div className="auth-role-tabs">
+              <button
+                type="button"
+                className={`auth-role-tab ${activeRoleTab === 'patient' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveRoleTab('patient');
+                  setErrors({});
+                }}
+              >
+                <User size={15} />
+                <span>Pasien / Pengunjung</span>
+              </button>
+              <button
+                type="button"
+                className={`auth-role-tab ${activeRoleTab === 'admin' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveRoleTab('admin');
+                  setErrors({});
+                  if (!email) setEmail('adminganz123@gmail.com');
+                }}
+              >
+                <ShieldCheck size={15} />
+                <span>Petugas Loket (Admin)</span>
+              </button>
+            </div>
+
+            {activeRoleTab === 'admin' ? (
+              <div className="auth-role-hint admin-hint">
+                <div className="hint-text-wrap">
+                  <ShieldCheck size={16} className="text-primary flex-shrink-0" />
+                  <span>Portal Administrator Loket & Poliklinik RS.</span>
+                </div>
+                <button
+                  type="button"
+                  className="quick-demo-fill-btn"
+                  onClick={() => {
+                    setEmail('adminganz123@gmail.com');
+                    setPassword('ladeshgimank');
+                    setErrors({});
+                  }}
+                >
+                  Isi Kredensial Admin Demo
+                </button>
+              </div>
+            ) : (
+              <div className="auth-role-hint patient-hint">
+                <div className="hint-text-wrap">
+                  <User size={16} className="text-primary flex-shrink-0" />
+                  <span>Portal Pasien untuk reservasi & cek status tiket.</span>
+                </div>
+                <button
+                  type="button"
+                  className="quick-demo-fill-btn"
+                  onClick={() => {
+                    setEmail('hendra.wijaya@gmail.com');
+                    setPassword('qlessMedika123');
+                    setErrors({});
+                  }}
+                >
+                  Isi Demo Pasien
+                </button>
+              </div>
+            )}
+          </div>
+
           {errors.general && (
             <div className="auth-general-error-box" role="alert" style={{
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -121,7 +192,7 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="auth-actual-form" noValidate>
             <FormField
-              label="Alamat Email"
+              label={activeRoleTab === 'admin' ? "Email Petugas Loket (Admin)" : "Alamat Email Pasien"}
               id="login-email"
               type="email"
               value={email}
@@ -129,10 +200,10 @@ export function LoginPage() {
                 setEmail(e.target.value);
                 if (errors.email || errors.general) setErrors(prev => ({ ...prev, email: '', general: '' }));
               }}
-              placeholder="nama@email.com atau email petugas loket"
+              placeholder={activeRoleTab === 'admin' ? "adminganz123@gmail.com" : "nama@email.com"}
               required
               error={errors.email}
-              iconLeft={<Mail size={16} />}
+              iconLeft={activeRoleTab === 'admin' ? <ShieldCheck size={16} /> : <Mail size={16} />}
             />
 
 

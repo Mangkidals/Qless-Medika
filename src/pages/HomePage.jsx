@@ -148,8 +148,6 @@ export function HomePage() {
 
                   <LiveQueueCard
                     clinic={queues[0]}
-                    onAdvance={advanceClinicQueue}
-                    showAdvanceBtn={true}
                   />
 
                   <div className="hero-quick-search-box">
