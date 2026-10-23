@@ -15,7 +15,6 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { hospitalInfo, hospitalStats, specialties, patientTestimonials } from '../data/hospitalData';
-import { doctorsList } from '../data/doctorsData';
 import { useQueue } from '../context/QueueContext';
 import Button from '../components/common/Button';
 import Card, { CardBody, CardFooter } from '../components/common/Card';
@@ -26,7 +25,7 @@ import LiveQueueCard from '../components/queue/LiveQueueCard';
 import './HomePage.css';
 
 export function HomePage() {
-  const { queues, advanceClinicQueue } = useQueue();
+  const { queues, doctors } = useQueue();
   const location = useLocation();
   const [accessDeniedToast, setAccessDeniedToast] = useState(false);
 
@@ -38,7 +37,7 @@ export function HomePage() {
     }
   }, [location.state]);
 
-  const featuredDoctors = doctorsList.slice(0, 3);
+  const featuredDoctors = (doctors || []).slice(0, 3);
   const topClinics = specialties.slice(0, 4);
 
   return (

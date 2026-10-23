@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initialQueueState, sampleTickets } from '../data/queueData';
+import { doctorsList } from '../data/doctorsData';
 
 const QueueContext = createContext(null);
 
 // Bump this when demo data changes to auto-reset stale localStorage
-const DATA_VERSION = 'v2.0-2026';
+const DATA_VERSION = 'v2.1-2026';
 
 export function QueueProvider({ children }) {
   const [queues, setQueues] = useState(() => {
@@ -13,6 +14,7 @@ export function QueueProvider({ children }) {
       if (version !== DATA_VERSION) {
         localStorage.removeItem('qless_queues');
         localStorage.removeItem('qless_tickets');
+        localStorage.removeItem('qless_doctors');
         localStorage.setItem('qless_data_version', DATA_VERSION);
         return initialQueueState;
       }
@@ -36,6 +38,19 @@ export function QueueProvider({ children }) {
     }
   });
 
+  const [doctors, setDoctors] = useState(() => {
+    try {
+      const version = localStorage.getItem('qless_data_version');
+      if (version !== DATA_VERSION) {
+        return doctorsList;
+      }
+      const saved = localStorage.getItem('qless_doctors');
+      return saved ? JSON.parse(saved) : doctorsList;
+    } catch {
+      return doctorsList;
+    }
+  });
+
   useEffect(() => {
     localStorage.setItem('qless_queues', JSON.stringify(queues));
   }, [queues]);
@@ -43,6 +58,10 @@ export function QueueProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('qless_tickets', JSON.stringify(tickets));
   }, [tickets]);
+
+  useEffect(() => {
+    localStorage.setItem('qless_doctors', JSON.stringify(doctors));
+  }, [doctors]);
 
   /**
    * Book a new appointment & generate an instant digital queue ticket
@@ -246,25 +265,81 @@ export function QueueProvider({ children }) {
   };
 
   /**
+   * Delete an existing ticket permanently
+   */
+  const deleteTicket = (bookingCode) => {
+    setTickets(prev => prev.filter(t => t.bookingCode !== bookingCode));
+  };
+
+  /**
+   * Admin: Add a new Doctor
+   */
+  const addDoctor = (doctorData) => {
+    const newId = `doc-${Date.now()}`;
+    const newDoctor = {
+      id: newId,
+      name: doctorData.name,
+      title: doctorData.title || `Spesialis ${doctorData.specialty}`,
+      specialty: doctorData.specialty,
+      specialtyId: doctorData.specialtyId || doctorData.specialty.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      rating: 5.0,
+      reviewsCount: 1,
+      experience: doctorData.experience || "5 Tahun",
+      education: doctorData.education || "Fakultas Kedokteran Spesialis Terpadu",
+      strNumber: doctorData.strNumber || `STR-31.1.${Math.floor(1000 + Math.random() * 9000)}.2026`,
+      photo: doctorData.photo || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80",
+      fee: doctorData.fee || "Rp 250.000",
+      days: doctorData.days && doctorData.days.length > 0 ? doctorData.days : ["Senin", "Rabu", "Jumat"],
+      clinicRoom: doctorData.clinicRoom || "Ruang 201, Lantai 2",
+      totalQuota: parseInt(doctorData.totalQuota, 10) || 20,
+      timeSlots: doctorData.timeSlots && doctorData.timeSlots.length > 0 ? doctorData.timeSlots : [
+        { time: "08:30 - 09:00", available: true, quotaRemaining: 3 },
+        { time: "09:00 - 09:30", available: true, quotaRemaining: 3 },
+        { time: "10:00 - 10:30", available: true, quotaRemaining: 3 },
+        { time: "11:00 - 11:30", available: true, quotaRemaining: 3 },
+        { time: "13:30 - 14:00", available: true, quotaRemaining: 4 },
+        { time: "14:00 - 14:30", available: true, quotaRemaining: 4 }
+      ],
+      bio: doctorData.bio || "Dokter spesialis berpengalaman di RS Qless Medika."
+    };
+
+    setDoctors(prev => [newDoctor, ...prev]);
+    return newDoctor;
+  };
+
+  /**
+   * Admin: Delete a Doctor
+   */
+  const deleteDoctor = (id) => {
+    setDoctors(prev => prev.filter(d => d.id !== id));
+  };
+
+  /**
    * Reset data back to demo default
    */
   const resetDemoData = () => {
     setQueues(initialQueueState);
     setTickets(sampleTickets);
+    setDoctors(doctorsList);
     localStorage.removeItem('qless_queues');
     localStorage.removeItem('qless_tickets');
+    localStorage.removeItem('qless_doctors');
   };
 
   return (
     <QueueContext.Provider value={{
       queues,
       tickets,
+      doctors,
       bookAppointment,
       findTicket,
       acceptTicket,
       callPatient,
       completeTicket,
       cancelTicket,
+      deleteTicket,
+      addDoctor,
+      deleteDoctor,
       advanceClinicQueue,
       resetDemoData
     }}>

@@ -6,9 +6,9 @@ import {
   User, 
   Phone, 
   CreditCard, 
-  Activity
+  Activity,
+  AlertCircle
 } from 'lucide-react';
-import { doctorsList } from '../data/doctorsData';
 import { useQueue } from '../context/QueueContext';
 import { useAuth } from '../context/AuthContext';
 import Card, { CardBody, CardHeader, CardFooter } from '../components/common/Card';
@@ -24,25 +24,25 @@ export function AppointmentPage() {
   const doctorParam = searchParams.get('doctor');
   const specialtyParam = searchParams.get('specialty');
 
-  const { bookAppointment } = useQueue();
+  const { bookAppointment, doctors } = useQueue();
   const { user } = useAuth();
 
   const minBookingDate = useMemo(() => new Date().toISOString().split('T')[0], []);
 
-  // Selected State
+  // Selected State - Default empty as requested by user
   const [selectedDoctorId, setSelectedDoctorId] = useState(() => {
     if (doctorParam) return doctorParam;
     if (specialtyParam) {
-      const matchDoc = doctorsList.find(d => d.specialtyId === specialtyParam);
+      const matchDoc = doctors.find(d => d.specialtyId === specialtyParam);
       if (matchDoc) return matchDoc.id;
     }
-    return doctorsList[0]?.id || '';
+    return ''; // Default kosong
   });
 
   const [selectedDate, setSelectedDate] = useState(minBookingDate);
-  const [selectedSlot, setSelectedSlot] = useState('09:00 - 09:30');
+  const [selectedSlot, setSelectedSlot] = useState('');
 
-  // Patient Info State
+  // Patient Info State: Auto-fill if user is logged in, but remain flexible to edit
   const [formData, setFormData] = useState(() => ({
     patientName: user?.name || '',
     nik: user?.nik || '',
@@ -55,17 +55,29 @@ export function AppointmentPage() {
   const [confirmedTicket, setConfirmedTicket] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Auto-fill from user profile when user logs in, without locking fields
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        patientName: prev.patientName || user.name || '',
+        nik: prev.nik || user.nik || '',
+        phone: prev.phone || user.phone || ''
+      }));
+    }
+  }, [user]);
+
   // Sync if URL search params change
   useEffect(() => {
     if (doctorParam) {
       setSelectedDoctorId(doctorParam);
     } else if (specialtyParam) {
-      const doc = doctorsList.find(d => d.specialtyId === specialtyParam);
+      const doc = doctors.find(d => d.specialtyId === specialtyParam);
       if (doc) setSelectedDoctorId(doc.id);
     }
-  }, [doctorParam, specialtyParam]);
+  }, [doctorParam, specialtyParam, doctors]);
 
-  const activeDoctor = doctorsList.find(d => d.id === selectedDoctorId) || doctorsList[0];
+  const activeDoctor = doctors.find(d => d.id === selectedDoctorId) || null;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,6 +89,9 @@ export function AppointmentPage() {
 
   const validate = () => {
     const errors = {};
+    if (!selectedDoctorId || !activeDoctor) {
+      errors.doctor = 'Harap pilih dokter spesialis terlebih dahulu';
+    }
     if (!formData.patientName.trim()) {
       errors.patientName = 'Nama lengkap pasien wajib diisi';
     }
@@ -103,6 +118,8 @@ export function AppointmentPage() {
       setFormErrors(errors);
       return;
     }
+
+    if (!activeDoctor) return;
 
     setIsSubmitting(true);
 
@@ -160,11 +177,20 @@ export function AppointmentPage() {
                       id="doctor-select"
                       as="select"
                       value={selectedDoctorId}
-                      onChange={(e) => setSelectedDoctorId(e.target.value)}
-                      options={doctorsList.map(doc => ({
-                        value: doc.id,
-                        label: `${doc.name} (${doc.specialty})`
-                      }))}
+                      onChange={(e) => {
+                        setSelectedDoctorId(e.target.value);
+                        if (formErrors.doctor) setFormErrors(prev => ({ ...prev, doctor: '' }));
+                        setSelectedSlot('');
+                      }}
+                      options={[
+                        { value: '', label: '-- Pilih Dokter Spesialis --' },
+                        ...doctors.map(doc => ({
+                          value: doc.id,
+                          label: `${doc.name} (${doc.specialty})`
+                        }))
+                      ]}
+                      required
+                      error={formErrors.doctor}
                     />
 
                     {/* Active Doctor Snapshot */}
@@ -212,14 +238,31 @@ export function AppointmentPage() {
                         Pilih Jam Konsultasi
                         <span className="required-star">*</span>
                       </label>
-                      <TimeSlotPicker
-                        slots={activeDoctor?.timeSlots || []}
-                        selectedSlot={selectedSlot}
-                        onSelectSlot={(slot) => {
-                          setSelectedSlot(slot);
-                          if (formErrors.slot) setFormErrors(prev => ({ ...prev, slot: '' }));
-                        }}
-                      />
+                      {activeDoctor ? (
+                        <TimeSlotPicker
+                          slots={activeDoctor?.timeSlots || []}
+                          selectedSlot={selectedSlot}
+                          onSelectSlot={(slot) => {
+                            setSelectedSlot(slot);
+                            if (formErrors.slot) setFormErrors(prev => ({ ...prev, slot: '' }));
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          padding: '14px 16px',
+                          backgroundColor: 'var(--bg)',
+                          borderRadius: '10px',
+                          border: '1px dashed var(--border)',
+                          fontSize: '13px',
+                          color: 'var(--text-muted)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px'
+                        }}>
+                          <AlertCircle size={18} className="text-accent flex-shrink-0" />
+                          <span>Silakan pilih dokter spesialis terlebih dahulu pada <strong>Langkah 1</strong> untuk menampilkan slot waktu konsultasi.</span>
+                        </div>
+                      )}
                       {formErrors.slot && (
                         <p className="form-error" role="alert">{formErrors.slot}</p>
                       )}
@@ -317,15 +360,15 @@ export function AppointmentPage() {
                       <h4 className="recap-title">Ringkasan Reservasi</h4>
                       <div className="recap-row">
                         <span>Poli:</span>
-                        <strong>{activeDoctor.specialty}</strong>
+                        <strong>{activeDoctor ? activeDoctor.specialty : '-'}</strong>
                       </div>
                       <div className="recap-row">
                         <span>Dokter:</span>
-                        <strong>{activeDoctor.name}</strong>
+                        <strong>{activeDoctor ? activeDoctor.name : 'Belum dipilih'}</strong>
                       </div>
                       <div className="recap-row">
                         <span>Slot:</span>
-                        <strong>{selectedSlot}</strong>
+                        <strong>{selectedSlot || 'Belum dipilih'}</strong>
                       </div>
                     </div>
                   </CardBody>

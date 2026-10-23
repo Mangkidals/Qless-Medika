@@ -21,12 +21,18 @@ import {
   ScanLine,
   QrCode,
   BadgeCheck,
-  Home
+  Trash2,
+  Plus,
+  Stethoscope,
+  MapPin,
+  Calendar,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { useQueue } from '../context/QueueContext';
 import { useAuth } from '../context/AuthContext';
 import { specialties } from '../data/hospitalData';
-import Card, { CardBody } from '../components/common/Card';
+import Card, { CardBody, CardHeader } from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import FormField from '../components/common/FormField';
@@ -41,6 +47,10 @@ export function AdminDashboardPage() {
     callPatient, 
     completeTicket, 
     cancelTicket,
+    deleteTicket,
+    doctors,
+    addDoctor,
+    deleteDoctor,
     resetDemoData
   } = useQueue();
 
@@ -184,11 +194,127 @@ export function AdminDashboardPage() {
     showToast(`Pelayanan untuk ${ticket.ticketNumber} (${ticket.patientName}) SELESAI.`, 'success');
   };
 
+  const handleDeleteTicket = (ticket) => {
+    if (window.confirm(`Hapus permanen nomor antrean ${ticket.ticketNumber} (${ticket.patientName}) dari sistem? Data ini tidak dapat dikembalikan.`)) {
+      deleteTicket(ticket.bookingCode);
+      showToast(`Antrean ${ticket.ticketNumber} berhasil dihapus permanen.`, 'danger');
+    }
+  };
+
   const handleCancel = (ticket) => {
     if (window.confirm(`Batalkan / tolak antrean ${ticket.ticketNumber} (${ticket.patientName})?`)) {
       cancelTicket(ticket.bookingCode, 'Dibatalkan oleh petugas loket');
       showToast(`Antrean ${ticket.ticketNumber} dibatalkan.`, 'danger');
     }
+  };
+
+  // --- Doctor Management States & Handlers ---
+  const [dashboardTab, setDashboardTab] = useState('queue'); // 'queue' | 'doctors'
+  const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
+
+  const ALL_DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const STANDARD_SLOTS = [
+    '08:00 - 08:30',
+    '08:30 - 09:00',
+    '09:00 - 09:30',
+    '09:30 - 10:00',
+    '10:00 - 10:30',
+    '10:30 - 11:00',
+    '11:00 - 11:30',
+    '13:30 - 14:00',
+    '14:00 - 14:30',
+    '15:00 - 15:30'
+  ];
+
+  const initialDoctorState = {
+    name: '',
+    title: '',
+    specialty: 'Penyakit Dalam',
+    fee: 'Rp 300.000',
+    clinicRoom: 'Ruang 204, Lantai 2',
+    totalQuota: '20',
+    experience: '8 Tahun',
+    education: 'Spesialis FK Universitas Indonesia',
+    days: ['Senin', 'Rabu', 'Jumat'],
+    selectedSlots: [
+      '08:30 - 09:00',
+      '09:00 - 09:30',
+      '10:00 - 10:30',
+      '11:00 - 11:30',
+      '13:30 - 14:00',
+      '14:00 - 14:30'
+    ]
+  };
+
+  const [doctorForm, setDoctorForm] = useState(initialDoctorState);
+
+  const handleDeleteDoctor = (doc) => {
+    if (window.confirm(`Hapus data ${doc.name} dari sistem poliklinik?`)) {
+      deleteDoctor(doc.id);
+      showToast(`Data ${doc.name} berhasil dihapus.`, 'danger');
+    }
+  };
+
+  const handleToggleDay = (day) => {
+    setDoctorForm(prev => {
+      const exists = prev.days.includes(day);
+      return {
+        ...prev,
+        days: exists ? prev.days.filter(d => d !== day) : [...prev.days, day]
+      };
+    });
+  };
+
+  const handleToggleSlot = (slot) => {
+    setDoctorForm(prev => {
+      const exists = prev.selectedSlots.includes(slot);
+      return {
+        ...prev,
+        selectedSlots: exists ? prev.selectedSlots.filter(s => s !== slot) : [...prev.selectedSlots, slot]
+      };
+    });
+  };
+
+  const handleSaveDoctor = (e) => {
+    e.preventDefault();
+    if (!doctorForm.name.trim()) {
+      alert('Nama lengkap dokter wajib diisi');
+      return;
+    }
+    if (doctorForm.days.length === 0) {
+      alert('Pilih minimal 1 hari jadwal praktik dokter');
+      return;
+    }
+    if (doctorForm.selectedSlots.length === 0) {
+      alert('Pilih minimal 1 slot sesi waktu praktik dokter');
+      return;
+    }
+
+    const totalQ = parseInt(doctorForm.totalQuota, 10) || 20;
+    const perSlot = Math.max(1, Math.ceil(totalQ / doctorForm.selectedSlots.length));
+
+    const timeSlots = doctorForm.selectedSlots.map(time => ({
+      time,
+      available: true,
+      quotaRemaining: perSlot
+    }));
+
+    addDoctor({
+      name: doctorForm.name,
+      title: doctorForm.title || `Dokter Spesialis ${doctorForm.specialty}`,
+      specialty: doctorForm.specialty,
+      fee: doctorForm.fee,
+      clinicRoom: doctorForm.clinicRoom,
+      totalQuota: totalQ,
+      experience: doctorForm.experience,
+      education: doctorForm.education,
+      days: doctorForm.days,
+      timeSlots
+    });
+
+    showToast(`Dokter ${doctorForm.name} berhasil ditambahkan!`, 'success');
+    setShowAddDoctorModal(false);
+    setDoctorForm(initialDoctorState);
   };
 
   if (!isAdminAuthenticated) {
@@ -220,11 +346,31 @@ export function AdminDashboardPage() {
             </div>
             <div>
               <div className="admin-badge-role">PORTAL PETUGAS LOKET & POLIKLINIK</div>
-              <h1 className="admin-main-title">Dashboard Manajemen Antrean</h1>
+              <h1 className="admin-main-title">Dashboard Manajemen Rumah Sakit</h1>
             </div>
           </div>
 
           <div className="admin-header-actions">
+            {/* View Switcher: Antrean vs Kelola Dokter */}
+            <div className="admin-main-view-switcher">
+              <button
+                type="button"
+                className={`view-switch-btn ${dashboardTab === 'queue' ? 'active' : ''}`}
+                onClick={() => setDashboardTab('queue')}
+              >
+                <Users size={15} />
+                <span>Antrean ({totalCount})</span>
+              </button>
+              <button
+                type="button"
+                className={`view-switch-btn ${dashboardTab === 'doctors' ? 'active' : ''}`}
+                onClick={() => setDashboardTab('doctors')}
+              >
+                <Stethoscope size={15} />
+                <span>Kelola Dokter & Sesi ({doctors?.length || 0})</span>
+              </button>
+            </div>
+
             {/* Active Admin Profile Tag */}
             <div className="admin-active-profile-card">
               <div className="admin-avatar-icon">
@@ -237,10 +383,6 @@ export function AdminDashboardPage() {
             </div>
 
             <ThemeToggle />
-
-            <Link to="/" className="btn btn-sm btn-ghost" title="Lihat Website Publik Pasien">
-              <Home size={14} /> Beranda Web
-            </Link>
 
             <Link to="/queue" className="btn btn-sm btn-secondary" target="_blank" rel="noreferrer" title="Buka Layar Monitor Publik di Tab Baru">
               Layar Publik <ArrowRight size={14} />
@@ -276,7 +418,9 @@ export function AdminDashboardPage() {
       </header>
 
       <div className="container admin-content-container">
-        {/* KPI Stat Cards Grid */}
+        {dashboardTab === 'queue' && (
+          <>
+            {/* KPI Stat Cards Grid */}
         <section className="admin-kpi-grid">
           <Card className="kpi-card" elevated>
             <CardBody className="kpi-body">
@@ -688,8 +832,19 @@ export function AdminDashboardPage() {
                                 className="text-danger"
                                 iconLeft={<X size={14} />}
                                 onClick={() => handleCancel(ticket)}
+                                title="Tolak antrean ini"
                               >
                                 Tolak
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-danger action-delete-btn"
+                                iconLeft={<Trash2 size={14} />}
+                                onClick={() => handleDeleteTicket(ticket)}
+                                title="Hapus antrean permanen"
+                              >
+                                Hapus
                               </Button>
                             </div>
                           </div>
@@ -720,8 +875,19 @@ export function AdminDashboardPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleCancel(ticket)}
+                                title="Batalkan antrean ini"
                               >
-                                Lewati
+                                Batal
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-danger action-delete-btn"
+                                iconLeft={<Trash2 size={14} />}
+                                onClick={() => handleDeleteTicket(ticket)}
+                                title="Hapus antrean permanen"
+                              >
+                                Hapus
                               </Button>
                             </div>
                           </div>
@@ -739,9 +905,21 @@ export function AdminDashboardPage() {
                             >
                               Selesai Konsultasi
                             </Button>
-                            <span className="serving-since-text">
-                              Mulai dipanggil: {ticket.calledAt || 'Baru saja'}
-                            </span>
+                            <div className="secondary-actions-row">
+                              <span className="serving-since-text">
+                                Mulai dipanggil: {ticket.calledAt || 'Baru saja'}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-danger action-delete-btn"
+                                iconLeft={<Trash2 size={14} />}
+                                onClick={() => handleDeleteTicket(ticket)}
+                                title="Hapus antrean permanen"
+                              >
+                                Hapus
+                              </Button>
+                            </div>
                           </div>
                         )}
 
@@ -751,14 +929,26 @@ export function AdminDashboardPage() {
                             <span className="done-status-text">
                               {isCompleted ? 'Pelayanan selesai' : 'Dibatalkan'}
                             </span>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              iconLeft={<Eye size={14} />}
-                              onClick={() => setPreviewTicket(ticket)}
-                            >
-                              Lihat Tiket
-                            </Button>
+                            <div className="secondary-actions-row">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                iconLeft={<Eye size={14} />}
+                                onClick={() => setPreviewTicket(ticket)}
+                              >
+                                Lihat Tiket
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-danger action-delete-btn"
+                                iconLeft={<Trash2 size={14} />}
+                                onClick={() => handleDeleteTicket(ticket)}
+                                title="Hapus antrean permanen"
+                              >
+                                Hapus
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -769,7 +959,299 @@ export function AdminDashboardPage() {
             </div>
           )}
         </div>
+      </>
+    )}
+
+    {/* Doctor Management View */}
+    {dashboardTab === 'doctors' && (
+      <div className="admin-doctors-container">
+        <div className="admin-doctors-header-row">
+          <div>
+            <div className="admin-badge-sub">MANAJEMEN DOKTER & JADWAL POLIKLINIK</div>
+            <h2 className="admin-section-heading">Data Dokter, Tarif, Lantai & Sesi Konsultasi</h2>
+            <p className="admin-section-subheading">
+              Kelola daftar dokter spesialis, poliklinik, tarif konsultasi, nomor lantai & ruang, total jatah pasien harian, serta ketersediaan sesi konsultasi.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="md"
+            iconLeft={<Plus size={18} />}
+            onClick={() => setShowAddDoctorModal(true)}
+          >
+            Tambah Dokter Baru
+          </Button>
+        </div>
+
+        <div className="admin-doctors-grid">
+          {doctors.map(doc => {
+            const activeSlots = doc.timeSlots?.filter(s => s.available !== false) || [];
+            const totalSlotsCount = doc.timeSlots?.length || 0;
+            return (
+              <Card key={doc.id} className="doctor-admin-card" elevated>
+                <CardBody className="doctor-admin-card-body">
+                  <div className="doctor-admin-top">
+                    <div className="doctor-avatar-wrapper">
+                      <img
+                        src={doc.photo || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300"}
+                        alt={doc.name}
+                        className="doctor-admin-avatar"
+                      />
+                      <span className="doctor-status-dot" title="Aktif Bertugas" />
+                    </div>
+                    <div className="doctor-admin-info">
+                      <div className="doctor-admin-header-line">
+                        <h3 className="doctor-admin-name">{doc.name}</h3>
+                        <Badge variant="primary" size="sm">
+                          {doc.specialty}
+                        </Badge>
+                      </div>
+                      <p className="doctor-admin-title">{doc.title}</p>
+                      
+                      <div className="doctor-admin-meta-tags">
+                        <span className="doc-meta-badge price-badge" title="Tarif / Biaya Konsultasi">
+                          <CreditCard size={13} /> {doc.fee || 'Rp 250.000'}
+                        </span>
+                        <span className="doc-meta-badge room-badge" title="Lokasi Lantai & Ruang Praktik">
+                          <MapPin size={13} /> {doc.clinicRoom || 'Lantai 2'}
+                        </span>
+                        <span className="doc-meta-badge quota-badge" title="Total Jatah Pasien Ditangani per Hari">
+                          <Users size={13} /> Kuota: {doc.totalQuota || 20} Pasien / Hari
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Jadwal Hari Praktik Available */}
+                  <div className="doctor-admin-schedule-section">
+                    <div className="doc-section-title">
+                      <Calendar size={14} />
+                      <span>Jadwal Hari Available Praktik:</span>
+                    </div>
+                    <div className="doc-days-row">
+                      {doc.days?.map(d => (
+                        <span key={d} className="doc-day-pill">{d}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sesi Waktu Tersedia & Available */}
+                  <div className="doctor-admin-slots-section">
+                    <div className="doc-section-title">
+                      <Clock size={14} />
+                      <span>Sesi Konsultasi ({activeSlots.length}/{totalSlotsCount} Tersedia):</span>
+                    </div>
+                    <div className="doc-slots-grid">
+                      {doc.timeSlots?.map(slot => (
+                        <div
+                          key={slot.time}
+                          className={`doc-slot-pill ${slot.available !== false ? 'available' : 'full'}`}
+                        >
+                          <span className="slot-time-text">{slot.time}</span>
+                          <span className="slot-quota-tag">
+                            {slot.available !== false ? `Sisa ${slot.quotaRemaining ?? 4} jatah` : 'Penuh'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Card Footer Actions */}
+                  <div className="doctor-admin-card-footer">
+                    <div className="doctor-admin-exp">
+                      <span>{doc.experience || '8+ Tahun Pengalaman'}</span>
+                      <span className="exp-dot">•</span>
+                      <span>{doc.education || 'FK UI'}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-danger"
+                      iconLeft={<Trash2 size={15} />}
+                      onClick={() => handleDeleteDoctor(doc)}
+                      title="Hapus dokter ini dari sistem"
+                    >
+                      Hapus Dokter
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            );
+          })}
+        </div>
       </div>
+    )}
+  </div>
+
+  {/* Doctor Add Modal */}
+  {showAddDoctorModal && (
+    <div className="admin-modal-backdrop" onClick={() => setShowAddDoctorModal(false)}>
+      <div className="admin-modal-content doctor-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <div className="doctor-modal-title-group">
+            <div className="doctor-modal-icon">
+              <Stethoscope size={20} />
+            </div>
+            <div>
+              <h3 className="modal-title">Tambah Dokter & Atur Jadwal Sesi</h3>
+              <p className="modal-sub">Lengkapi data dokter, tarif konsultasi, lantai & ruangan, kuota harian, serta ketersediaan sesi.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="admin-modal-close"
+            onClick={() => setShowAddDoctorModal(false)}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSaveDoctor} className="admin-modal-body doctor-modal-body">
+          <div className="form-grid-2">
+            <FormField
+              label="Nama Lengkap Dokter *"
+              placeholder="Contoh: dr. Hendra Wijaya, Sp.PD"
+              value={doctorForm.name}
+              onChange={(e) => setDoctorForm({ ...doctorForm, name: e.target.value })}
+              required
+            />
+            <FormField
+              label="Gelar & Spesialisasi Formal"
+              placeholder="Contoh: Spesialis Penyakit Dalam Konsultan"
+              value={doctorForm.title}
+              onChange={(e) => setDoctorForm({ ...doctorForm, title: e.target.value })}
+            />
+          </div>
+
+          <div className="form-grid-3">
+            <FormField
+              label="Pilih Poliklinik *"
+              as="select"
+              value={doctorForm.specialty}
+              onChange={(e) => setDoctorForm({ ...doctorForm, specialty: e.target.value })}
+              options={specialties.map(s => ({
+                value: s.name,
+                label: `${s.name} (${s.room})`
+              }))}
+            />
+            <FormField
+              label="Tarif / Harga Konsultasi *"
+              placeholder="Contoh: Rp 350.000"
+              value={doctorForm.fee}
+              onChange={(e) => setDoctorForm({ ...doctorForm, fee: e.target.value })}
+              iconLeft={<CreditCard size={16} />}
+              required
+            />
+            <FormField
+              label="Lantai & Nomor Ruangan *"
+              placeholder="Contoh: Ruang 304, Lantai 3"
+              value={doctorForm.clinicRoom}
+              onChange={(e) => setDoctorForm({ ...doctorForm, clinicRoom: e.target.value })}
+              iconLeft={<MapPin size={16} />}
+              required
+            />
+          </div>
+
+          <div className="form-grid-3">
+            <FormField
+              label="Total Jatah Pasien Ditangani *"
+              type="number"
+              min="1"
+              max="100"
+              placeholder="Contoh: 20"
+              value={doctorForm.totalQuota}
+              onChange={(e) => setDoctorForm({ ...doctorForm, totalQuota: e.target.value })}
+              iconLeft={<Users size={16} />}
+              helper="Kapasitas maksimal pasien per hari."
+              required
+            />
+            <FormField
+              label="Pengalaman Praktik"
+              placeholder="Contoh: 8 Tahun"
+              value={doctorForm.experience}
+              onChange={(e) => setDoctorForm({ ...doctorForm, experience: e.target.value })}
+            />
+            <FormField
+              label="Pendidikan / Almamater"
+              placeholder="Contoh: Spesialis FK Univ. Indonesia"
+              value={doctorForm.education}
+              onChange={(e) => setDoctorForm({ ...doctorForm, education: e.target.value })}
+            />
+          </div>
+
+          {/* Jadwal Available (Hari Praktik) */}
+          <div className="doctor-form-section">
+            <label className="form-section-label">
+              <Calendar size={15} /> Jadwal Available / Hari Praktik Dokter * (Klik untuk memilih)
+            </label>
+            <div className="days-picker-pills">
+              {ALL_DAYS.map(day => {
+                const isSelected = doctorForm.days.includes(day);
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    className={`day-toggle-pill ${isSelected ? 'active' : ''}`}
+                    onClick={() => handleToggleDay(day)}
+                  >
+                    {isSelected && <Check size={14} />}
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sesi Waktu Available */}
+          <div className="doctor-form-section">
+            <div className="section-label-row">
+              <label className="form-section-label">
+                <Clock size={15} /> Sesi Waktu Tersedia / Slot Konsultasi * ({doctorForm.selectedSlots.length} slot dipilih)
+              </label>
+              <span className="slots-quota-note">
+                Jatah per slot: ~{Math.max(1, Math.ceil((parseInt(doctorForm.totalQuota, 10) || 20) / (doctorForm.selectedSlots.length || 1)))} pasien
+              </span>
+            </div>
+            <div className="slots-picker-grid">
+              {STANDARD_SLOTS.map(slot => {
+                const isSelected = doctorForm.selectedSlots.includes(slot);
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    className={`slot-toggle-chip ${isSelected ? 'active' : ''}`}
+                    onClick={() => handleToggleSlot(slot)}
+                  >
+                    {isSelected ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                    <span>{slot}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="doctor-modal-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => setShowAddDoctorModal(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              iconLeft={<Plus size={16} />}
+            >
+              Simpan Data Dokter
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )}
 
       {/* Ticket Modal Preview */}
       {previewTicket && (
